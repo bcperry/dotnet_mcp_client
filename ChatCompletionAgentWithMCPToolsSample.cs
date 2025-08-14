@@ -49,7 +49,7 @@ internal sealed class ChatCompletionAgentWithMCPToolsSample : BaseSample
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(options: new() {})
         };
 
-        string prompt = "What is the likely color of the sky in Boston today?";
+        string prompt = "make something up to test the create tool";
         Console.WriteLine(prompt);
 
         // Add function invocation filter to track tool calls
@@ -60,8 +60,8 @@ internal sealed class ChatCompletionAgentWithMCPToolsSample : BaseSample
         // Define the agent
         ChatCompletionAgent agent = new()
         {
-            Instructions = "Answer questions about the weather.",
-            Name = "WeatherAgent",
+            Instructions = "test mcp stuff.",
+            Name = "bob",
             Kernel = kernel,
             Arguments = new KernelArguments(executionSettings),
         };

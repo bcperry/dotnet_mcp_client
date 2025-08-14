@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.SemanticKernel;
 using ModelContextProtocol;
@@ -32,7 +33,7 @@ internal abstract class BaseSample
             clientTransport: new SseClientTransport(new SseClientTransportOptions
             {
                 Name = "MCPServer",
-                Endpoint = new Uri("http://localhost:8001/mcp"), // Path to the MCPServer executable
+                Endpoint = new Uri("http://localhost:8000/mcp"), // Path to the MCPServer executable
             }),
             clientOptions: samplingRequestHandler != null ? new McpClientOptions()
             {
@@ -115,11 +116,65 @@ internal abstract class BaseSample
         foreach (var tool in tools)
         {
             Console.WriteLine($"- Name: {tool.Name}, Description: {tool.Description}");
+            
+            // Debug: Print raw JSON schema
+            Console.WriteLine($"  Raw Schema: {tool.JsonSchema}");
+            
+            // Display parameter information if available
+            try
+            {
+                if (tool.JsonSchema.ValueKind != JsonValueKind.Null && 
+                    tool.JsonSchema.TryGetProperty("properties", out var properties) &&
+                    tool.JsonSchema.TryGetProperty("required", out var requiredArray))
+                {
+                    var requiredFields = new HashSet<string>();
+                    foreach (var element in requiredArray.EnumerateArray())
+                    {
+                        requiredFields.Add(element.GetString() ?? "");
+                    }
+
+                    Console.WriteLine("  Required parameters:");
+                    foreach (var prop in properties.EnumerateObject())
+                    {
+                        if (requiredFields.Contains(prop.Name))
+                        {
+                            var description = "";
+                            var type = "string";
+                            
+                            if (prop.Value.TryGetProperty("description", out var descElement))
+                                description = descElement.GetString() ?? "";
+                            if (prop.Value.TryGetProperty("type", out var typeElement))
+                                type = typeElement.GetString() ?? "string";
+                                
+                            Console.WriteLine($"    - {prop.Name} ({type}): {description}");
+                        }
+                    }
+
+                    Console.WriteLine("  Optional parameters:");
+                    foreach (var prop in properties.EnumerateObject())
+                    {
+                        if (!requiredFields.Contains(prop.Name))
+                        {
+                            var description = "";
+                            var type = "string";
+                            
+                            if (prop.Value.TryGetProperty("description", out var descElement))
+                                description = descElement.GetString() ?? "";
+                            if (prop.Value.TryGetProperty("type", out var typeElement))
+                                type = typeElement.GetString() ?? "string";
+                                
+                            Console.WriteLine($"    - {prop.Name} ({type}): {description}");
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Ignore schema parsing errors
+            }
         }
         Console.WriteLine();
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Returns the path to the MCPServer server executable.
     /// </summary>
     /// <returns>The path to the MCPServer server executable.</returns>
