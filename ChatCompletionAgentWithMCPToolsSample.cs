@@ -49,7 +49,7 @@ internal sealed class ChatCompletionAgentWithMCPToolsSample : BaseSample
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(options: new() {})
         };
 
-        string prompt = "make something up to test the create tool";
+        string prompt = "make something up to test the create tools";
         Console.WriteLine(prompt);
 
         // Add function invocation filter to track tool calls
